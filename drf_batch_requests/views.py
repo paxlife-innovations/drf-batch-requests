@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from drf_batch_requests.exceptions import RequestAttributeError
 from drf_batch_requests.graph import RequestGraph
 from drf_batch_requests.request import BatchRequestsFactory
-from drf_batch_requests import settings as app_settings
+from drf_batch_requests.settings import conf
 from drf_batch_requests.utils import generate_node_callback
 
 
@@ -17,7 +17,7 @@ class BatchView(APIView):
     permission_classes = []
 
     def get_requests_consumer_class(self):
-        mod, inst = app_settings.REQUESTS_CONSUMER_BACKEND.rsplit('.', 1)
+        mod, inst = conf.SUBREQ_CONSUMER_BACKEND.rsplit('.', 1)
         mod = import_module(mod)
         return getattr(mod, inst)
 

@@ -17,6 +17,7 @@ from django.utils.six import BytesIO
 from rest_framework.exceptions import ValidationError
 
 from drf_batch_requests.serializers import BatchRequestSerializer
+from drf_batch_requests.settings import conf
 from drf_batch_requests.utils import get_attribute
 
 

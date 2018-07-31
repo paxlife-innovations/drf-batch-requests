@@ -6,6 +6,7 @@ from django.utils import six
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from drf_batch_requests.settings import conf
 from drf_batch_requests.utils import generate_random_id
 
 
