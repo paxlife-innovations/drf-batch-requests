@@ -61,12 +61,19 @@ class BatchView(APIView):
 
                 result = {
                     'code': response.status_code,
-                    'headers': [
-                        {'name': key, 'value': value}
+                    'headers': {
+                        key: value
                         for key, value in response._headers.values()
-                    ],
+                    },
                     'body': response.content.decode('utf-8'),
                 }
+
+                # add ID header to response
+                if current_request.has_id:
+                    response_id_header = current_request.response_id
+                    result['headers'].update(
+                        {conf.SUBREQ_ID_HEADER: response_id_header}
+                    )
 
                 if is_success(response.status_code):
                     result['_data'] = json.loads(result['body'])

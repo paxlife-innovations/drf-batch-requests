@@ -33,6 +33,9 @@ class BatchRequest(HttpRequest):
         self.method = request_data['method']
         self.path_info = self.path = request_data['relative_url']
         self._set_headers(request, request_data.get('headers', {}))
+        self.has_id = conf.SUBREQ_ID_HEADER in request_data.get('headers', {})
+        if self.has_id:
+            self.response_id = self._get_response_id(request_data)
         self.COOKIES = request.COOKIES
         self.GET = parse_qs(urlparse(self.path_info).query)
 
@@ -66,6 +69,12 @@ class BatchRequest(HttpRequest):
                      else header
             result.update({header.upper(): value})
         return result
+
+    def _get_response_id(self, request_data):
+        response_id = request_data['headers'][conf.SUBREQ_ID_HEADER]
+        if conf.SUBREQ_ID_RESPONSE_PREFIX is not None:
+            response_id = '%s%s' % (conf.SUBREQ_ID_RESPONSE_PREFIX, response_id)
+        return response_id
 
 
 class BatchRequestsFactory(object):

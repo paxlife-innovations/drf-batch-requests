@@ -25,7 +25,13 @@ class SingleRequestSerializer(serializers.Serializer):
     files = serializers.SerializerMethodField()
 
     def validate_headers(self, value):
-        if isinstance(value, dict):
+        if not isinstance(value, dict):
+            try:
+                value = json.loads(value)
+            except (TypeError, ValueError):
+                raise serializers.ValidationError('Invalid format.')    
+        if conf.SUBREQ_ID_REQUIRED and conf.SUBREQ_ID_HEADER not in value:
+            raise serializers.ValidationError('Header "%s" is required.' % conf.SUBREQ_ID_HEADER)
             return value
 
     def validate_relative_url(self, value):
@@ -94,16 +100,26 @@ class BatchRequestSerializer(serializers.Serializer):
         if not isinstance(value, list):
             raise ValidationError('List of requests should be provided to do batch')
 
-        r_serializers = list(map(lambda d: SingleRequestSerializer(data=d, context={'parent': self}), value))
-
+        subreq_serializers = [
+            SingleRequestSerializer(
+                data=subreq,
+                context={'parent': self})
+            for subreq in value
+        ]
         errors = []
-        for serializer in r_serializers:
+        for serializer in subreq_serializers:
             serializer.is_valid()
-            errors.append(serializer.errors)
+            subreq_errors = serializer.errors.copy()
+            # add subrequest IDs to error messages
+            if subreq_errors:
+                id_header = conf.SUBREQ_ID_HEADER
+                sub_id = serializer.data.get('headers', {}).get(id_header, 'no ID given')
+                subreq_errors.update({id_header: sub_id})
+            errors.append(subreq_errors)
         if any(errors):
-            raise ValidationError(errors)
+            raise serializers.ValidationError(errors)
 
-        return [s.data for s in r_serializers]
+        return [s.data for s in subreq_serializers]
 
     def validate(self, attrs):
         attrs = super(BatchRequestSerializer, self).validate(attrs)
