@@ -1,11 +1,11 @@
 """
-Django settings for drfst project.
+Django settings for drf_batch_example project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/1.7/topics/settings/
+https://docs.djangoproject.com/en/1.11/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/1.7/ref/settings/
+https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
