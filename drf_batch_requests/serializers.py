@@ -4,7 +4,6 @@ from django.core.files import File
 from django.utils import six
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from drf_batch_requests.settings import conf
 from drf_batch_requests.utils import generate_random_id
@@ -32,11 +31,11 @@ class SingleRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Invalid format.')    
         if conf.SUBREQ_ID_REQUIRED and conf.SUBREQ_ID_HEADER not in value:
             raise serializers.ValidationError('Header "%s" is required.' % conf.SUBREQ_ID_HEADER)
-            return value
+        return value
 
     def validate_relative_url(self, value):
         if not value.startswith('/'):
-            raise self.fail('Url should start with /')
+            raise serializers.ValidationError('Url should start with /.')
 
         return value
 
@@ -47,7 +46,7 @@ class SingleRequestSerializer(serializers.Serializer):
         try:
             json.loads(value)
         except (TypeError, ValueError):
-            self.fail('invalid')
+            raise serializers.ValidationError('Invalid format.') 
 
         return value
 
@@ -58,7 +57,7 @@ class SingleRequestSerializer(serializers.Serializer):
         if 'depends_on' in attrs:
             value = attrs['depends_on']
             if not isinstance(value, (six.string_types, list)):
-                raise ValidationError({'depends_on': 'Incorrect value provided'})
+                raise serializers.ValidationError({'depends_on': 'Incorrect value provided'})
 
             if isinstance(value, six.string_types):
                 attrs['depends_on'] = [value]
@@ -86,7 +85,7 @@ class SingleRequestSerializer(serializers.Serializer):
                 key: self.context['parent'].get_files()[key] for key in attrs['attached_files']
             }
         else:
-            raise ValidationError('Incorrect format.')
+            raise serializers.ValidationError('Incorrect format.')
 
 
 class BatchRequestSerializer(serializers.Serializer):
@@ -98,7 +97,7 @@ class BatchRequestSerializer(serializers.Serializer):
 
     def validate_batch(self, value):
         if not isinstance(value, list):
-            raise ValidationError('List of requests should be provided to do batch')
+            raise serializers.ValidationError('Must be an array.')
 
         subreq_serializers = [
             SingleRequestSerializer(
@@ -135,10 +134,10 @@ class BatchRequestSerializer(serializers.Serializer):
             elif isinstance(attached_files, list):
                 files_in_use.extend(attached_files)
             else:
-                raise ValidationError({'attached_files': 'Invalid format.'})
+                raise serializers.ValidationError({'attached_files': 'Invalid format.'})
 
         missing_files = set(files_in_use) - set(self.get_files().keys())
         if missing_files:
-            raise ValidationError('Some of files are not provided: {}'.format(', '.join(missing_files)))
+            raise serializers.ValidationError('Some of files are not provided: {}'.format(', '.join(missing_files)))
 
         return attrs
