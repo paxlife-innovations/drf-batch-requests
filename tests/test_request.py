@@ -99,4 +99,28 @@ class RequestHeadersTest(APITestCase):
         # Assert
         self.assertEqual(responses.status_code, 400)
 
-    
+    def test_duplicated_names(self):
+        # Arrange
+        batch = [
+            {
+                'name': 'samenameeverywhere',
+                'method': 'get',
+                'relative_url': '/test/',
+                'headers': {
+                    CONTENT_ID_HEADER: 'notequal_1',
+                },
+            },
+            {
+                'name': 'samenameeverywhere',
+                'method': 'get',
+                'relative_url': '/test/',
+                'headers': {
+                    CONTENT_ID_HEADER: 'notequal_2',
+                },
+            },
+        ]
+        # Act
+        responses = self.forced_auth_req('post','/batch/',
+            data={'batch': batch})
+        # Assert
+        self.assertEqual(responses.status_code, 400)

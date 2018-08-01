@@ -107,10 +107,12 @@ class BatchRequestSerializer(serializers.Serializer):
         ]
         errors = []
         subreq_ids = []
+        subreq_names = []
         id_header = conf.SUBREQ_ID_HEADER
         for serializer in subreq_serializers:
             serializer.is_valid()
             sub_id = serializer.data.get('headers', {}).get(id_header, 'no ID given')
+            sub_name = serializer.data.get('name', None)
             subreq_errors = serializer.errors.copy()
             # add subrequest IDs to error messages
             if subreq_errors:
@@ -118,12 +120,18 @@ class BatchRequestSerializer(serializers.Serializer):
             errors.append(subreq_errors)
             if sub_id != 'no ID given':
                 subreq_ids.append(sub_id)
+            if sub_name is not None:
+                subreq_names.append(sub_name)
         if any(errors):
             raise serializers.ValidationError(errors)
 
         # check for subrequest ID duplicates
         if len(subreq_ids) > len(set(subreq_ids)):
             raise serializers.ValidationError('Subrequest IDs must be unique.')
+        
+        # check for subrequest name duplicates
+        if len(subreq_names) > len(set(subreq_names)):
+            raise serializers.ValidationError('Subrequest names must be unique.')
 
         return [s.data for s in subreq_serializers]
 
