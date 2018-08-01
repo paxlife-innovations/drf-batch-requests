@@ -74,3 +74,29 @@ class RequestHeadersTest(APITestCase):
             data={'batch': batch})
         # Assert
         self.assertEqual(responses.status_code, 400)
+
+    def test_duplicated_ids(self):
+        # Arrange
+        batch = [
+            {
+                'method': 'get',
+                'relative_url': '/test/',
+                'headers': {
+                    CONTENT_ID_HEADER: 'idontcare',
+                },
+            },
+            {
+                'method': 'get',
+                'relative_url': '/test/',
+                'headers': {
+                    CONTENT_ID_HEADER: 'idontcare',
+                },
+            },
+        ]
+        # Act
+        responses = self.forced_auth_req('post','/batch/',
+            data={'batch': batch})
+        # Assert
+        self.assertEqual(responses.status_code, 400)
+
+    
